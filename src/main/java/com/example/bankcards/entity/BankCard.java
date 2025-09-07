@@ -28,6 +28,10 @@ public class BankCard {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String blockReason; // Причина блокировки
+    private Boolean blockRequested = false; // Флаг запроса на блокировку
+    private String blockRequestReason;  // Причина запроса блокировки
+
     @Column(name = "card_number", nullable = false, length = 16, unique = true)
     @NotBlank(message = "Card number is required")
     @Pattern(regexp = "^[0-9]{16}$", message = "Card number must contain 16 digits")
@@ -134,14 +138,47 @@ public class BankCard {
 
 
     // Блокировка карты
-    public void blockCard(){
+    public void blockCard(String reason){
         status = CardStatus.BLOCKED;
+        this.blockReason = reason;
+        this.blockRequested = false; // Сбрасываем запрос после блокировки
+        this.blockRequestReason = null;
     }
 
     // Активация карты
     public void activateCard(){
         if (isExpired()) throw new IllegalStateException("Expired card can not not be activated");
         status = CardStatus.ACTIVE;
+        this.blockReason = null;
+        this.blockRequested = false;
+        this.blockRequestReason = null;
+    }
+
+    // Запрос на блокировку
+    public void requestBlock(String reason) {
+        if (this.status != CardStatus.ACTIVE) throw new IllegalStateException("Only active cards can request block");
+        this.blockRequested = true;
+        this.blockRequestReason = reason;
+    }
+
+    // Админ подтверждает запрос на блокировку от пользователя
+    public void approveBlockRequest(String adminReason) {
+        if (!this.blockRequested) throw new IllegalStateException("No block request pending");
+        this.status = CardStatus.BLOCKED;
+        this.blockReason = adminReason != null ? adminReason : this.blockRequestReason;
+        this.blockRequested = false;
+        this.blockRequestReason = null;
+    }
+
+    // Админ отклоняет запрос на блокировку
+    public void rejectBlockRequest() {
+        if (!this.blockRequested) throw new IllegalStateException("No block request pending");
+        this.blockRequested = false;
+        this.blockRequestReason = null;
+    }
+
+    public boolean isBlockRequested() {
+        return Boolean.TRUE.equals(this.blockRequested);
     }
 
     // Получить последние 4 цифры номера карты
