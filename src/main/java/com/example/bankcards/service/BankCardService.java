@@ -74,7 +74,7 @@ public class BankCardService {
 
     // ==== МЕТОДЫ АДМИНА ====
 
-    private BankCard createNewCard(String cardNumber, String cardOwnerName, Long ownerId){
+    public BankCard createNewCard(String cardNumber, String cardOwnerName, Long ownerId){
         isUserAdmin();
         User user = userRepository.findById(ownerId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -139,11 +139,22 @@ public class BankCardService {
         return bankCardRepository.save(card);
     }
 
+    // Получить все карты по статусу
+    public List<BankCard> getCardsByStatus(CardStatus status) {
+        isUserAdmin();
+        return bankCardRepository.findByStatus(status);
+    }
+
+    // Получить все карты в системе
+    public List<BankCard> getAllCards() {
+        isUserAdmin();
+        return bankCardRepository.findAll();
+    }
 
     // === ОБЩИЕ МЕТОДЫ ===
 
     // Пользователи получают свою карту с маскированным номером
-    private BankCard getCardById(Long cardId){
+    public BankCard getCardById(Long cardId){
         User currentUser = getCurrentUser();
         BankCard card = bankCardRepository.findById(cardId)
                 .orElseThrow(() -> new RuntimeException("No card with such id"));
@@ -198,8 +209,5 @@ public class BankCardService {
                 .orElseThrow(() -> new RuntimeException("Card not found or access denied"));
         return card.getBalance();
     }
-
-
-
 
 }
