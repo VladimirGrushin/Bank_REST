@@ -43,7 +43,7 @@ public class BankCard {
     private String cardOwnerName;
 
     @Column(name = "validity_period", nullable = false, length = 25)
-    @Future(message = "Validity date must be in the future")
+    @Future(message = "Validity period must be in the future")
     @NotNull(message = "Validity period is required")
     private LocalDate validityPeriod;
 
