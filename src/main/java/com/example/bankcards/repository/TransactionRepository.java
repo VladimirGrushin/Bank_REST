@@ -24,8 +24,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     // Найти транзакции по карте получателя
     List<Transaction> findByToCardId(Long toCardId);
 
-    // Найти транзакции по карте (отправитель или получатель)
+    // Найти транзакции по карте (отправитель или получатель). Данный метод оказался не нужен, так как по ТЗ необходимо реализовать переводы только между своими картами
     List<Transaction> findByFromCardIdOrToCardId(Long fromCardId, Long toCardId);
+
+    //Найти транзакции по id получателя и отправителя. Тут тоже можно было ограничиться только одним id, так как переводы только между своими картами
+    List<Transaction> findByFromCardOwnerIdOrToCardOwnerId(Long fromCardOwnerId, Long toCardOwnerId);
 
     // Найти транзакции пользователя (где он отправитель или получатель)
     @Query("SELECT t FROM Transaction t WHERE " +
