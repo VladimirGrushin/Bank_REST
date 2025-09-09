@@ -5,9 +5,13 @@ C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\service
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\entity\Transaction.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\dto\response\BankCardResponse.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\dto\response\AuthResponse.java
+C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\exception\BadRequestException.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\BankRestApplication.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\entity\Role.java
+C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\exception\InsufficientFundsException.java
+C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\exception\ValidationErrorResponse.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\dto\response\TransactionResponse.java
+C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\exception\CardOperationException.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\service\TransactionService.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\entity\User.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\entity\TransactionStatus.java
@@ -19,6 +23,7 @@ C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\control
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\controller\BankCardController.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\dto\request\BlockRequest.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\repository\TransactionRepository.java
+C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\exception\ErrorResponse.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\repository\BankCardRepository.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\controller\UserController.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\dto\request\AuthRequest.java
@@ -27,5 +32,7 @@ C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\dto\req
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\entity\BankCard.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\service\UserService.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\dto\request\TransferRequest.java
+C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\exception\ResourceNotFoundException.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\repository\UserRepository.java
+C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\exception\GlobalExceptionHandler.java
 C:\Users\user\Desktop\vova\Bank_REST\src\main\java\com\example\bankcards\service\JwtTokenProvider.java
