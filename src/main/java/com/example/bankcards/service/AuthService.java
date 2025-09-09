@@ -28,8 +28,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final long jwtExpirationMs = 86400000; // 24 часа
-    private final SecretKey jwtSecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final JwtTokenProvider jwtTokenProvider;
 
 
     public AuthResponse authenticate(AuthRequest authRequest){
@@ -41,7 +40,7 @@ public class AuthService {
                 authRequest.getLastName()
         ).orElseThrow(() -> new ResourceNotFoundException("User", "firstName",  authRequest.getFirstName(), "lastName", authRequest.getLastName()));
 
-        String accessToken = generateAccessToken(user);
+        String accessToken = jwtTokenProvider.generateToken(user);
         return createAuthResponse(user, accessToken);
     }
 
@@ -58,21 +57,11 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        String accessToken = generateAccessToken(savedUser);
+        String accessToken = jwtTokenProvider.generateToken(savedUser);
 
         return createAuthResponse(savedUser, accessToken);
     }
 
-    private String generateAccessToken(User user){
-        return Jwts.builder()
-                .setSubject(createUsername(user.getFirstName(), user.getLastName()))
-                .claim("userId", user.getId())
-                .claim("role", user.getRole().name())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(jwtSecretKey)
-                .compact();
-    }
 
     private AuthResponse createAuthResponse(User user, String accessToken) {
         AuthResponse response = new AuthResponse();

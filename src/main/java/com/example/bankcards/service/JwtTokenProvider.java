@@ -1,17 +1,17 @@
 package com.example.bankcards.service;
 
+import com.example.bankcards.config.JwtConfig;
 import com.example.bankcards.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Value;
 
 import javax.crypto.SecretKey;
 import java.util.Collections;
@@ -19,20 +19,14 @@ import java.util.Date;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class JwtTokenProvider {
-    @Value("${app.jwt.secret}") // Секретный ключ из application.yml
-    private String jwtSecret;
-
-    @Value("${app.jwt.expiration:86400000}")
-    private long jwtExpiration;
-
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
-    }
+    private final JwtConfig jwtConfig;
+    private final SecretKey secretKey;
 
     public String generateToken(User user) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpiration);
+        Date expiryDate = new Date(now.getTime() + jwtConfig.getExpirationMs());
 
         return Jwts.builder()
                 .setSubject(user.getId().toString())
@@ -42,14 +36,14 @@ public class JwtTokenProvider {
                 .claim("role", user.getRole().name())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public boolean isValid(String token) {
         try {
             Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
+                    .setSigningKey(secretKey)
                     .build()
                     .parseClaimsJws(token);
             return true;
@@ -60,7 +54,7 @@ public class JwtTokenProvider {
 
     public Authentication getAuthentication(String token) {
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+                .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -68,7 +62,6 @@ public class JwtTokenProvider {
         String username = claims.get("username", String.class);
         String role = claims.get("role", String.class);
 
-        // Создаем authorities из роли
         List<GrantedAuthority> authorities = Collections.singletonList(
                 new SimpleGrantedAuthority(role)
         );
@@ -82,7 +75,7 @@ public class JwtTokenProvider {
 
     public Long getUserIdFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+                .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -92,12 +85,13 @@ public class JwtTokenProvider {
 
     public Date getExpirationDateFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+                .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
 
         return claims.getExpiration();
     }
+
 
 }

@@ -1,10 +1,14 @@
 package com.example.bankcards;
 
+import com.example.bankcards.config.JwtConfig;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
+@EnableConfigurationProperties(JwtConfig.class)
+
 public class BankRestApplication {
     public static void main(String[] args) {
         Dotenv dotenv = Dotenv.configure().load();
