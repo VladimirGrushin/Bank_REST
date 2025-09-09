@@ -1,1 +1,855 @@
-# Здесь будет OpenAPI описание всех доступных эндпоинтов и моделей данных.
+openapi: 3.0.3
+info:
+  title: Bank Cards REST API
+  description: REST API для системы банковских карт с аутентификацией, управлением картами и транзакциями
+  version: 1.0.0
+  contact:
+    name: Vladimir Grushin
+    url: https://github.com/VladimirGrushin/Bank_REST
+
+servers:
+  - url: http://localhost:8080/api
+    description: Development server
+
+tags:
+  - name: Authentication
+    description: Аутентификация и управление сессиями
+  - name: Bank Cards
+    description: Управление банковскими картами
+  - name: Transactions
+    description: Операции с транзакциями и переводами
+  - name: Users
+    description: Управление пользователями и профилями
+
+paths:
+  # ===== AUTH CONTROLLER =====
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Вход в систему
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Неверные учетные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Регистрация нового пользователя
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Успешная регистрация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Пользователь уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Выход из системы
+      operationId: logout
+      responses:
+        '200':
+          description: Успешный выход
+        '401':
+          description: Не авторизован
+
+  # ===== BANK CARD CONTROLLER =====
+  /cards/my:
+    get:
+      tags: [Bank Cards]
+      summary: Получить мои карты
+      operationId: getMyCards
+      responses:
+        '200':
+          description: Список карт пользователя
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BankCard'
+        '401':
+          description: Не авторизован
+
+  /cards/admin/create:
+    post:
+      tags: [Bank Cards]
+      summary: Создать новую карту (админ)
+      operationId: createCard
+      parameters:
+        - name: cardNumber
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Номер карты
+        - name: cardOwnerName
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Имя владельца карты
+        - name: ownerId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID владельца карты
+      responses:
+        '200':
+          description: Карта успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankCard'
+        '403':
+          description: Доступ запрещен (только для админов)
+
+  /cards/admin/{cardId}/number:
+    get:
+      tags: [Bank Cards]
+      summary: Получить номер карты (админ)
+      operationId: getCardNumberForAdmin
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID карты
+      responses:
+        '200':
+          description: Номер карты
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Карта не найдена
+
+  /cards/admin/{cardId}/activate:
+    patch:
+      tags: [Bank Cards]
+      summary: Активировать карту (админ)
+      operationId: activateCard
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID карты
+      responses:
+        '200':
+          description: Карта активирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankCard'
+        '404':
+          description: Карта не найдена
+
+  /cards/admin/{cardId}:
+    delete:
+      tags: [Bank Cards]
+      summary: Удалить карту (админ)
+      operationId: deleteCard
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID карты
+      responses:
+        '200':
+          description: Карта удалена
+        '404':
+          description: Карта не найдена
+
+  /cards/admin/{cardId}/approve-block:
+    patch:
+      tags: [Bank Cards]
+      summary: Одобрить запрос на блокировку (админ)
+      operationId: approveBlockRequest
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID карты
+        - name: reason
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Причина блокировки
+      responses:
+        '200':
+          description: Запрос одобрен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankCard'
+        '404':
+          description: Карта не найдена
+
+  /cards/admin/{cardId}/reject-block:
+    patch:
+      tags: [Bank Cards]
+      summary: Отклонить запрос на блокировку (админ)
+      operationId: rejectBlockRequest
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID карты
+      responses:
+        '200':
+          description: Запрос отклонен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankCard'
+        '404':
+          description: Карта не найдена
+
+  /cards/admin/{cardId}/block:
+    patch:
+      tags: [Bank Cards]
+      summary: Заблокировать карту (админ)
+      operationId: blockCard
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID карты
+        - name: reason
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Причина блокировки
+      responses:
+        '200':
+          description: Карта заблокирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankCard'
+        '404':
+          description: Карта не найдена
+
+  /cards/{cardId}/request-block:
+    patch:
+      tags: [Bank Cards]
+      summary: Запросить блокировку карты
+      operationId: requestBlockCard
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID карты
+        - name: reason
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Причина блокировки
+      responses:
+        '200':
+          description: Запрос на блокировку отправлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankCard'
+        '404':
+          description: Карта не найдена
+
+  /cards/{cardId}/cancel-block-request:
+    patch:
+      tags: [Bank Cards]
+      summary: Отменить запрос на блокировку
+      operationId: cancelBlockRequest
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID карты
+      responses:
+        '200':
+          description: Запрос отменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankCard'
+        '404':
+          description: Карта не найдена
+
+  /cards/{cardId}/balance:
+    get:
+      tags: [Bank Cards]
+      summary: Получить баланс карты
+      operationId: getCardBalance
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID карты
+      responses:
+        '200':
+          description: Баланс карты
+          content:
+            application/json:
+              schema:
+                type: number
+                format: double
+        '404':
+          description: Карта не найдена
+
+  /cards/admin/status/{status}:
+    get:
+      tags: [Bank Cards]
+      summary: Получить карты по статусу (админ)
+      operationId: getCardsByStatus
+      parameters:
+        - name: status
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/CardStatus'
+          description: Статус карты
+      responses:
+        '200':
+          description: Список карт по статусу
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BankCard'
+        '403':
+          description: Доступ запрещен
+
+  /cards/admin/all:
+    get:
+      tags: [Bank Cards]
+      summary: Получить все карты (админ)
+      operationId: getAllCards
+      responses:
+        '200':
+          description: Все карты системы
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BankCard'
+        '403':
+          description: Доступ запрещен
+
+  /cards/{cardId}:
+    get:
+      tags: [Bank Cards]
+      summary: Получить карту по ID
+      operationId: getCardById
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID карты
+      responses:
+        '200':
+          description: Информация о карте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankCard'
+        '404':
+          description: Карта не найдена
+
+  # ===== TRANSACTION CONTROLLER =====
+  /transactions/transfer/my-cards:
+    post:
+      tags: [Transactions]
+      summary: Перевод между своими картами
+      operationId: transferBetweenMyCards
+      parameters:
+        - name: fromCardId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID карты отправителя
+        - name: toCardId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID карты получателя
+        - name: amount
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+          description: Сумма перевода
+        - name: description
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Описание перевода
+      responses:
+        '200':
+          description: Перевод выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Ошибка перевода
+        '404':
+          description: Карта не найдена
+
+  /transactions/my:
+    get:
+      tags: [Transactions]
+      summary: Получить мои транзакции
+      operationId: getMyTransactions
+      responses:
+        '200':
+          description: История транзакций
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+        '401':
+          description: Не авторизован
+
+  # ===== USER CONTROLLER =====
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Получить мой профиль
+      operationId: getMyProfile
+      responses:
+        '200':
+          description: Профиль пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Не авторизован
+
+  /users/me/password:
+    patch:
+      tags: [Users]
+      summary: Изменить мой пароль
+      operationId: changeMyPassword
+      parameters:
+        - name: newPassword
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Новый пароль
+      responses:
+        '200':
+          description: Пароль изменен
+        '401':
+          description: Не авторизован
+
+  /users/all:
+    get:
+      tags: [Users]
+      summary: Получить всех пользователей (админ)
+      operationId: getAllUsers
+      responses:
+        '200':
+          description: Список всех пользователей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+        '403':
+          description: Доступ запрещен
+
+  /users:
+    post:
+      tags: [Users]
+      summary: Создать пользователя (админ)
+      operationId: createUser
+      parameters:
+        - name: firstName
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Имя
+        - name: lastName
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Фамилия
+        - name: password
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Пароль
+        - name: role
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Role'
+          description: Роль пользователя
+      responses:
+        '200':
+          description: Пользователь создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '403':
+          description: Доступ запрещен
+
+  /users/{id}:
+    delete:
+      tags: [Users]
+      summary: Удалить пользователя (админ)
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID пользователя
+      responses:
+        '204':
+          description: Пользователь удален
+        '403':
+          description: Доступ запрещен
+        '404':
+          description: Пользователь не найден
+
+    get:
+      tags: [Users]
+      summary: Найти пользователя по ID (админ)
+      operationId: findUserById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID пользователя
+      responses:
+        '200':
+          description: Информация о пользователе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '403':
+          description: Доступ запрещен
+        '404':
+          description: Пользователь не найден
+
+  /users/{id}/role:
+    patch:
+      tags: [Users]
+      summary: Изменить роль пользователя (админ)
+      operationId: changeUserRole
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID пользователя
+        - name: newRole
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Role'
+          description: Новая роль
+      responses:
+        '200':
+          description: Роль изменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '403':
+          description: Доступ запрещен
+        '404':
+          description: Пользователь не найден
+
+  /users/search:
+    get:
+      tags: [Users]
+      summary: Найти пользователя по имени (админ)
+      operationId: findUserByName
+      parameters:
+        - name: firstName
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Имя
+        - name: lastName
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Фамилия
+      responses:
+        '200':
+          description: Информация о пользователе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '403':
+          description: Доступ запрещен
+        '404':
+          description: Пользователь не найден
+
+  /users/by-role/{role}:
+    get:
+      tags: [Users]
+      summary: Найти пользователей по роли (админ)
+      operationId: findUsersByRole
+      parameters:
+        - name: role
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Role'
+          description: Роль пользователя
+      responses:
+        '200':
+          description: Список пользователей по роли
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+        '403':
+          description: Доступ запрещен
+
+components:
+  schemas:
+    AuthRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "user@example.com"
+        password:
+          type: string
+          example: "password123"
+      required: [username, password]
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        username:
+          type: string
+          example: "user@example.com"
+        role:
+          type: string
+          example: "USER"
+      required: [token, username, role]
+
+    BankCard:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        cardNumber:
+          type: string
+          example: "1234567812345678"
+        cardOwnerName:
+          type: string
+          example: "Иван Иванов"
+        balance:
+          type: number
+          format: double
+          example: 1000.50
+        status:
+          $ref: '#/components/schemas/CardStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, cardNumber, cardOwnerName, balance, status]
+
+    CardStatus:
+      type: string
+      enum: [ACTIVE, BLOCKED, PENDING_BLOCK, INACTIVE]
+      example: "ACTIVE"
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        fromCardId:
+          type: integer
+          format: int64
+          example: 1
+        toCardId:
+          type: integer
+          format: int64
+          example: 2
+        amount:
+          type: number
+          format: double
+          example: 100.00
+        description:
+          type: string
+          example: "Перевод между картами"
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [PENDING, COMPLETED, FAILED]
+          example: "COMPLETED"
+      required: [id, fromCardId, toCardId, amount, timestamp, status]
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        firstName:
+          type: string
+          example: "Иван"
+        lastName:
+          type: string
+          example: "Иванов"
+        email:
+          type: string
+          example: "user@example.com"
+        role:
+          $ref: '#/components/schemas/Role'
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, firstName, lastName, email, role]
+
+    Role:
+      type: string
+      enum: [ADMIN, USER]
+      example: "USER"
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          example: 400
+        error:
+          type: string
+          example: "Bad Request"
+        message:
+          type: string
+          example: "Недостаточно средств на карте"
+        path:
+          type: string
+          example: "/api/transactions/transfer"
+      required: [timestamp, status, error, message, path]
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
