@@ -8,9 +8,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
+
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 public class AuthController {
     private final AuthService authService;
 
@@ -31,5 +33,10 @@ public class AuthController {
     public ResponseEntity<Void> logout() {
         authService.logout();
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/test")
+    public ResponseEntity<String> test() {
+        return ResponseEntity.ok("Auth controller is working! " + new Date());
     }
 }

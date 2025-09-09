@@ -1,9 +1,44 @@
-# 
-# docker-compose.yml — определяет сервисы для разработки и тестирования.
+version: '3.8'
 
-Что нужно сделать:
-  - Настроить сервисы для:
-      - PostgreSQL (или MySQL) с начальной базой.
-      - Приложения Spring Boot (если нужно).
-  - Открыть нужные порты (например, 5432, 8080).
-  - Настроить volume для хранения данных БД.
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: bankcards-postgres
+    environment:
+      POSTGRES_DB: bank_cards_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - bankcards-network
+    restart: unless-stopped
+
+  app:
+    build: .
+    container_name: bankcards-app
+    environment:
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/bank_cards_db
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=password
+      - JWT_SECRET=your-super-secure-256-bit-secret-key-change-in-production
+      - JWT_EXPIRATION_MS=86400000
+      - SPRING_PROFILES_ACTIVE=docker
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - bankcards-network
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+
+volumes:
+  postgres_data:
+
+networks:
+  bankcards-network:
+    driver: bridge

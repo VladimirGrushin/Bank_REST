@@ -21,19 +21,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-
+        if (isPublicEndpoint(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         try {
             String token = getTokenFromRequest(request);
 
             if (token != null && jwtTokenProvider.isValid(token)) {
                 Authentication authentication = jwtTokenProvider.getAuthentication(token);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+            } else {
+                // Если токен не валидный, возвращаем 401
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
             }
         } catch (Exception e) {
             logger.error("Cannot set user authentication", e);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
 
         filterChain.doFilter(request, response);
+    }
+
+
+    private boolean isPublicEndpoint(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/api/auth/") ||
+                path.startsWith("/api/public/") ||
+                path.contains("/swagger-ui/") ||
+                path.contains("/v3/api-docs/") ||
+                path.equals("/api/actuator/health");
     }
 
     private String getTokenFromRequest(HttpServletRequest request) {

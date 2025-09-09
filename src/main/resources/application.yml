@@ -1,4 +1,5 @@
 spring:
+
   datasource:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
@@ -20,8 +21,8 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
 jwt:
-  secret: mySuperSecretKeyForJWTEncryption1234567890
-  expiration-ms: 86400000
+  secret: ${JWT_SECRET:mySuperSecretKeyForJWTEncryption1234567890}
+  expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
 springdoc:
   api-docs:
