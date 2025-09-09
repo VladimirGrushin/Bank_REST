@@ -20,7 +20,7 @@ import java.util.List;
 
 @Component
 public class JwtTokenProvider {
-    @Value("${app.jwt.secret}") // Секретный ключ из application.properties
+    @Value("${app.jwt.secret}") // Секретный ключ из application.yml
     private String jwtSecret;
 
     @Value("${app.jwt.expiration:86400000}")

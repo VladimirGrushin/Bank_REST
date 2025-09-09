@@ -68,12 +68,6 @@ public class BankCardController {
     }
 
 
-    @GetMapping("/{cardId}")
-    public ResponseEntity<BankCard> getCard(@PathVariable Long cardId) {
-        BankCard card = bankCardService.getCardById(cardId);
-        return ResponseEntity.ok(card);
-    }
-
     @PatchMapping("/{cardId}/request-block")
     public ResponseEntity<BankCard> requestBlockCard(@PathVariable Long cardId, @RequestParam String reason) {
         BankCard card = bankCardService.requestBlockCard(cardId, reason);

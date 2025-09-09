@@ -31,13 +31,13 @@ public interface BankCardRepository extends JpaRepository<BankCard, Long> {
     List<BankCard> findByStatus(CardStatus status);
 
     // Найти карты с истёкшим сроком действия
-    List<BankCard> findByExpirationDateBetween(LocalDate start, LocalDate end);
+    List<BankCard> findByValidityPeriodBetween(LocalDate start, LocalDate end);
 
 
     // Поиск карт пользователя по имени владельца карты
     @Query("SELECT c FROM BankCard c WHERE c.owner.id = :userId AND " +
-            "LOWER(c.cardHolderName) LIKE LOWER(CONCAT('%', :search, '%'))")
-    Page<BankCard> findByOwnerIdAndCardHolderNameContaining(
+            "LOWER(c.cardOwnerName) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<BankCard> findByOwnerIdAndCardOwnerNameContaining(
             @Param("userId") Long userId,
             @Param("search") String search,
             Pageable pageable);
