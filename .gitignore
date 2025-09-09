@@ -1,0 +1,33 @@
+.env
+.env.*
+*.env
+
+# Build directories
+target/
+build/
+bin/
+out/
+
+# Dependencies
+node_modules/
+vendor/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+EOF

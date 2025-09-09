@@ -4,6 +4,8 @@ package com.example.bankcards.service;
 import com.example.bankcards.entity.BankCard;
 import com.example.bankcards.entity.CardStatus;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.exception.CardOperationException;
+import com.example.bankcards.exception.ResourceNotFoundException;
 import com.example.bankcards.repository.BankCardRepository;
 import com.example.bankcards.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -62,7 +64,7 @@ public class BankCardService {
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByFirstNameAndLastName(username.split(" ")[0], username.split(" ")[1])
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "firstName",  username.split(" ")[0], "lastName", username.split(" ")[1]));
     }
 
     public void isUserAdmin() {
@@ -77,7 +79,7 @@ public class BankCardService {
     public BankCard createNewCard(String cardNumber, String cardOwnerName, Long ownerId){
         isUserAdmin();
         User user = userRepository.findById(ownerId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", ownerId));
         BankCard newCard = new BankCard(encrypt(cardNumber), cardOwnerName,LocalDate.now(), user);
         newCard.setStatus(CardStatus.ACTIVE);
         newCard.setBalance(BigDecimal.ZERO);
@@ -88,15 +90,15 @@ public class BankCardService {
     public String getCardNumberForAdmin(Long cardId){
         isUserAdmin();
         BankCard card = bankCardRepository.findById(cardId)
-                .orElseThrow(() -> new RuntimeException("No card with such id"));
+                .orElseThrow(() -> new ResourceNotFoundException("Card", "id", cardId));
         return decrypt(card.getCardNumber());
     }
 
     public BankCard activateCardByAdmin(Long id){
         isUserAdmin();
         BankCard card = bankCardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No card with such id"));
-        if (card.isExpired())throw new RuntimeException("Can not activate expired card");
+                .orElseThrow(() -> new ResourceNotFoundException("Card", "id", id));
+        if (card.isExpired())throw new CardOperationException("Cannot activate expired card");
         card.activateCard();
         return bankCardRepository.save(card);
     }
@@ -104,8 +106,8 @@ public class BankCardService {
     public void deleteCardByAdmin(Long id){
         isUserAdmin();
         BankCard card = bankCardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No card with such id"));
-        if (card.getBalance().compareTo(BigDecimal.ZERO) != 0) throw new RuntimeException("Can not block card with non-zero balance");
+                .orElseThrow(() -> new ResourceNotFoundException("Card", "id", id));
+        if (card.getBalance().compareTo(BigDecimal.ZERO) != 0) throw new CardOperationException("Cannot delete card with non-zero balance");
         bankCardRepository.delete(card);
     }
 
@@ -113,8 +115,8 @@ public class BankCardService {
     public BankCard approveBlockRequest(Long id, String reason){
         isUserAdmin();
         BankCard card = bankCardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No card with such id"));
-        if (!card.isBlockRequested()) throw new RuntimeException("No block request pending for this card");
+                .orElseThrow(() -> new ResourceNotFoundException("Card", "id", id));
+        if (!card.isBlockRequested()) throw new CardOperationException("No block request pending for this card");
         card.approveBlockRequest(reason);
         return bankCardRepository.save(card);
     }
@@ -123,8 +125,8 @@ public class BankCardService {
     public BankCard rejectBlockRequest(Long id){
         isUserAdmin();
         BankCard card = bankCardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No card with such id"));
-        if (!card.isBlockRequested()) throw new RuntimeException("No block request pending for this card");
+                .orElseThrow(() -> new ResourceNotFoundException("Card", "id", id));
+        if (!card.isBlockRequested()) throw new CardOperationException("No block request pending for this card");
         card.rejectBlockRequest();
         return bankCardRepository.save(card);
     }
@@ -133,8 +135,8 @@ public class BankCardService {
     public BankCard blockCard(Long id, String reason){
         isUserAdmin();
         BankCard card = bankCardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No card with such id"));
-        if (card.isBlocked()) throw new RuntimeException("Card is already blocked");
+                .orElseThrow(() -> new ResourceNotFoundException("Card", "id", id));
+        if (card.isBlocked()) throw new CardOperationException("Card is already blocked");
         card.blockCard(reason);
         return bankCardRepository.save(card);
     }
@@ -157,7 +159,7 @@ public class BankCardService {
     public BankCard getCardById(Long cardId){
         User currentUser = getCurrentUser();
         BankCard card = bankCardRepository.findById(cardId)
-                .orElseThrow(() -> new RuntimeException("No card with such id"));
+                .orElseThrow(() -> new ResourceNotFoundException("Card", "id", cardId));
         if (!currentUser.isAdmin() && !card.getOwner().getId().equals(currentUser.getId())) throw new AccessDeniedException("Access denied");
         if(!currentUser.isAdmin()) {
             String decryptedNumber = decrypt(card.getCardNumber());
@@ -184,9 +186,9 @@ public class BankCardService {
     public BankCard requestBlockCard(Long id, String reason){
         User currentUser = getCurrentUser();
         BankCard card = bankCardRepository.findByIdAndOwnerId(id, currentUser.getId())
-                .orElseThrow(() -> new RuntimeException("Card not found or access denied"));
-        if (card.isBlocked()) throw new RuntimeException("Card is already blocked");
-        if (card.isBlockRequested()) throw new RuntimeException("Block request already pending");
+                .orElseThrow(() -> new AccessDeniedException("Card not found or access denied"));
+        if (card.isBlocked()) throw new CardOperationException("Card is already blocked");
+        if (card.isBlockRequested()) throw new CardOperationException("Block request already pending");
         card.requestBlock(reason);
         return bankCardRepository.save(card);
     }
@@ -195,8 +197,8 @@ public class BankCardService {
     public BankCard cancelRequestBlockCard(Long id){
         User currentUser = getCurrentUser();
         BankCard card = bankCardRepository.findByIdAndOwnerId(id, currentUser.getId())
-                .orElseThrow(() -> new RuntimeException("Card not found or access denied"));
-        if (!card.isBlockRequested()) throw new RuntimeException("There is now block request");
+                .orElseThrow(() -> new AccessDeniedException("Card not found or access denied"));
+        if (!card.isBlockRequested()) throw new CardOperationException("No block request pending for this card");
         card.rejectBlockRequest();
         return bankCardRepository.save(card);
     }
@@ -206,7 +208,7 @@ public class BankCardService {
     public BigDecimal getCardBalance(Long cardId){
         User currentUser = getCurrentUser();
         BankCard card = bankCardRepository.findByIdAndOwnerId(cardId, currentUser.getId())
-                .orElseThrow(() -> new RuntimeException("Card not found or access denied"));
+                .orElseThrow(() -> new AccessDeniedException("Card not found or access denied"));
         return card.getBalance();
     }
 

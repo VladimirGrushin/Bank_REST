@@ -4,6 +4,8 @@ package com.example.bankcards.service;
 import com.example.bankcards.dto.request.AuthRequest;
 import com.example.bankcards.dto.response.AuthResponse;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.exception.BadRequestException;
+import com.example.bankcards.exception.ResourceNotFoundException;
 import com.example.bankcards.repository.UserRepository;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
@@ -37,14 +39,15 @@ public class AuthService {
         User user = userRepository.findByFirstNameAndLastName(
                 authRequest.getFirstName(),
                 authRequest.getLastName()
-        ).orElseThrow(() -> new RuntimeException("User not found"));
+        ).orElseThrow(() -> new ResourceNotFoundException("User", "firstName",  authRequest.getFirstName(), "lastName", authRequest.getLastName()));
 
         String accessToken = generateAccessToken(user);
         return createAuthResponse(user, accessToken);
     }
 
     public AuthResponse register(AuthRequest authRequest) {
-        if (userRepository.existsByFirstNameAndLastName(authRequest.getFirstName(), authRequest.getLastName())) throw new RuntimeException("User already exists");
+        if (userRepository.existsByFirstNameAndLastName(authRequest.getFirstName(), authRequest.getLastName()))
+            throw new BadRequestException("User with name '" + authRequest.getFirstName() + " " + authRequest.getLastName() + "' already exists");
 
 
         User user = new User();
