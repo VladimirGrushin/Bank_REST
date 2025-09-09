@@ -3,6 +3,8 @@ package com.example.bankcards.service;
 
 import com.example.bankcards.entity.Role;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.exception.BadRequestException;
+import com.example.bankcards.exception.ResourceNotFoundException;
 import com.example.bankcards.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,7 +25,7 @@ public class UserService {
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByFirstNameAndLastName(username.split(" ")[0], username.split(" ")[1])
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "firstName",  username.split(" ")[0], "lastName", username.split(" ")[1]));
     }
 
     public void isUserAdmin() {
@@ -37,7 +39,7 @@ public class UserService {
 
     public User createUser(String password, String firstName, String lastName, Role role){
         isUserAdmin();
-        if (userRepository.existsByFirstNameAndLastName(firstName, lastName)) throw new RuntimeException("Such user already exists");
+        if (userRepository.existsByFirstNameAndLastName(firstName, lastName)) throw new BadRequestException("User with name '" + firstName + " " + lastName + "' already exists");
         User user = new User( passwordEncoder.encode(password), firstName, lastName, role);
         return userRepository.save(user);
     }
@@ -46,7 +48,7 @@ public class UserService {
         isUserAdmin();
         User userToDelete = findUserBuId(id);
         User currentUser = getCurrentUser();
-        if (userToDelete.getId().equals(currentUser.getId())) throw new RuntimeException("You can not delete your own account");
+        if (userToDelete.getId().equals(currentUser.getId())) throw new BadRequestException("You can not delete your own account");
         userRepository.delete(userToDelete);
     }
 
@@ -60,13 +62,13 @@ public class UserService {
     public User findUserBuId(Long id){
         isUserAdmin();
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No user with such id"));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
     }
 
     public User findUserByName(String firstName, String lastName){
         isUserAdmin();
         return userRepository.findByFirstNameAndLastName(firstName, lastName)
-                .orElseThrow(() -> new RuntimeException("No user with such name"));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "firstName", firstName, "lastName", lastName));
     }
 
     public List<User> findUsersByRole(Role role){
@@ -85,6 +87,7 @@ public class UserService {
     }
 
     public void changeMyPassword(String newPassword){
+        if (newPassword == null || newPassword.length() < 6) throw new BadRequestException("New password must be at least 6 characters long");
         User currentUser = getCurrentUser();
         currentUser.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(currentUser);

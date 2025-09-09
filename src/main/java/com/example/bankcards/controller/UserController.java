@@ -4,9 +4,11 @@ package com.example.bankcards.controller;
 import com.example.bankcards.dto.response.UserResponse;
 import com.example.bankcards.entity.Role;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.exception.BadRequestException;
 import com.example.bankcards.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,8 +55,14 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id){
-        userService.deleteUser(id);
-        return ResponseEntity.ok().build();
+        try {
+            userService.deleteUser(id);
+            return ResponseEntity.noContent().build();
+        } catch (AccessDeniedException e) {
+            throw e; // Spring Security перехватит это
+        } catch (BadRequestException e) {
+            throw e; // GlobalExceptionHandler обработает
+        }
     }
 
     @PatchMapping("/{id}/role")

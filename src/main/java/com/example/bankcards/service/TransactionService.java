@@ -2,10 +2,14 @@ package com.example.bankcards.service;
 import com.example.bankcards.entity.BankCard;
 import com.example.bankcards.entity.Transaction;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.exception.CardOperationException;
+import com.example.bankcards.exception.InsufficientFundsException;
+import com.example.bankcards.exception.ResourceNotFoundException;
 import com.example.bankcards.repository.BankCardRepository;
 import com.example.bankcards.repository.TransactionRepository;
 import com.example.bankcards.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -24,19 +28,20 @@ public class TransactionService {
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByFirstNameAndLastName(username.split(" ")[0], username.split(" ")[1])
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "firstName",  username.split(" ")[0], "lastName", username.split(" ")[1]));
     }
 
     // Перевод между своими картами
     public Transaction transferBetweenMyCards(Long fromCardId, Long toCardId, BigDecimal value, String description){
         User currentUser = getCurrentUser();
         BankCard fromCard = bankCardRepository.findByIdAndOwnerId(fromCardId, currentUser.getId())
-                 .orElseThrow(() -> new RuntimeException("Source card not found"));
+                 .orElseThrow(() -> new AccessDeniedException("Source card not found or access denied"));
         BankCard toCard = bankCardRepository.findByIdAndOwnerId(toCardId, currentUser.getId())
-                .orElseThrow(() -> new RuntimeException("Destination card not found"));
+                .orElseThrow(() -> new AccessDeniedException("Destination card not found or access denied"));
 
-        if (!fromCard.isActive() || !toCard.isActive()) throw new RuntimeException("Card is not active");
-        if (fromCard.getBalance().compareTo(value) < 0) throw new RuntimeException("Not enough funds");
+        if (!fromCard.isActive()) throw new CardOperationException("Source card is not active");
+        if (!toCard.isActive()) throw new CardOperationException("Destination card is not active");
+        if (fromCard.getBalance().compareTo(value) < 0) throw new InsufficientFundsException("Insufficient funds on source card. Available: " + fromCard.getBalance());
 
         fromCard.withdraw(value);
         toCard.deposit(value);
