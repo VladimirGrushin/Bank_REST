@@ -30,4 +30,4 @@ logs/
 # Temporary files
 tmp/
 temp/
-EOF
+EOF.env
