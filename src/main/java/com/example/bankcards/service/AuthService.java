@@ -62,8 +62,25 @@ public class AuthService {
         return createAuthResponse(savedUser, accessToken);
     }
 
+    public AuthResponse registerAdmin(AuthRequest authRequest){
+        if (userRepository.existsByFirstNameAndLastName(authRequest.getFirstName(), authRequest.getLastName()))
+            throw new BadRequestException("User with name '" + authRequest.getFirstName() + " " + authRequest.getLastName() + "' already exists");
 
-    private AuthResponse createAuthResponse(User user, String accessToken) {
+
+        User user = new User();
+        user.setFirstName(authRequest.getFirstName());
+        user.setLastName(authRequest.getLastName());
+        user.setPassword(passwordEncoder.encode(authRequest.getPassword()));
+        user.setRole(Role.ROLE_ADMIN);
+
+        User savedUser = userRepository.save(user);
+
+        String accessToken = jwtTokenProvider.generateToken(savedUser);
+
+        return createAuthResponse(savedUser, accessToken);
+    }
+
+    AuthResponse createAuthResponse(User user, String accessToken) {
         AuthResponse response = new AuthResponse();
         response.setToken(accessToken);
         response.setUserId(user.getId());
@@ -72,7 +89,7 @@ public class AuthService {
         return response;
     }
 
-    private String createUsername(String firstName, String lastName) {
+    String createUsername(String firstName, String lastName) {
         return firstName + " " + lastName;
     }
 

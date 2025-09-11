@@ -38,6 +38,9 @@ public class TransactionService {
                  .orElseThrow(() -> new AccessDeniedException("Source card not found or access denied"));
         BankCard toCard = bankCardRepository.findByIdAndOwnerId(toCardId, currentUser.getId())
                 .orElseThrow(() -> new AccessDeniedException("Destination card not found or access denied"));
+        if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new CardOperationException("Transfer amount must be greater than zero");
+        }
 
         if (!fromCard.isActive()) throw new CardOperationException("Source card is not active");
         if (!toCard.isActive()) throw new CardOperationException("Destination card is not active");

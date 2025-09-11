@@ -33,12 +33,18 @@ public class BankCardService {
     @Value("${encryption.secret-key:defaultSecretKey}") // Значение по умолчанию
     private String secretKey;
 
+
+
     // === МЕТОДЫ ШИФРОВАНИЯ  ===
 
-    private String encrypt(String data) {
+
+    String encrypt(String data) {
         try {
+            // Проверяем и корректируем длину ключа
+            byte[] keyBytes = ensureKeyLength(secretKey).getBytes(StandardCharsets.UTF_8);
+            SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
+
             Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            SecretKeySpec keySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "AES");
             cipher.init(Cipher.ENCRYPT_MODE, keySpec);
             byte[] encrypted = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(encrypted);
@@ -47,16 +53,36 @@ public class BankCardService {
         }
     }
 
-    private String decrypt(String encryptedData) {
+    String decrypt(String encryptedData) {
         try {
+            // Проверяем и корректируем длину ключа
+            byte[] keyBytes = ensureKeyLength(secretKey).getBytes(StandardCharsets.UTF_8);
+            SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
+
             Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            SecretKeySpec keySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "AES");
             cipher.init(Cipher.DECRYPT_MODE, keySpec);
             byte[] decoded = Base64.getDecoder().decode(encryptedData);
             byte[] decrypted = cipher.doFinal(decoded);
             return new String(decrypted, StandardCharsets.UTF_8);
         } catch (Exception e) {
             throw new RuntimeException("Decryption failed", e);
+        }
+    }
+
+    private String ensureKeyLength(String key) {
+        // AES требует ключи длиной 16, 24 или 32 байта
+        int requiredLength = 32; // 256-bit
+        if (key.length() == requiredLength) {
+            return key;
+        }
+
+        // Дополняем или обрезаем ключ до нужной длины
+        if (key.length() < requiredLength) {
+            // Дополняем нулями
+            return String.format("%-" + requiredLength + "s", key).replace(' ', '0');
+        } else {
+            // Обрезаем до нужной длины
+            return key.substring(0, requiredLength);
         }
     }
 

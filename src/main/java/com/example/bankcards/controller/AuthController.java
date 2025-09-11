@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.Date;
 
 @RestController
@@ -16,18 +17,28 @@ import java.util.Date;
 public class AuthController {
     private final AuthService authService;
 
+    @GetMapping("/")
+    public ResponseEntity<String> home() {
+        return ResponseEntity.ok("Bank Cards API is running! Use /api endpoints.");
+    }
+
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest authRequest){
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest authRequest){
         AuthResponse response = authService.authenticate(authRequest);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody AuthRequest authRequest) {
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody AuthRequest authRequest) {
         AuthResponse response = authService.register(authRequest);
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/register/admin")
+    public ResponseEntity<AuthResponse> registerAdmin(@Valid @RequestBody AuthRequest authRequest) {
+        AuthResponse response = authService.registerAdmin(authRequest);
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
