@@ -51,12 +51,18 @@ $ JWT_SECRET=your-super-secret-jwt-key-min-256-bits-make-it-very-long-and-secure
 $ JWT_EXPIRATION=86400000
 $ EOF
 ```
-3. **Запустите приложение**
+3. **Откройте Docker Desktop**
+
+4. **Запустите приложение**
 ```bash 
 $ docker-compose up -d
 ```
-Приложение будет доступно по адресу: http://localhost:8080
+5. **Тестовый запрос**
 
+```bash
+curl http://localhost:8000/api/auth/test 
+```
+**Должно вернуть : Auth controller is working!**
 ### Вариант 2: Ручная установка
 1. **Создайте базу данных PostgreSQL**
 ```sql
@@ -93,10 +99,6 @@ mvn test
 ```bash
 mvn test -Dtest="ClientServiceUnitTest"
 ```
-**Запуск тестов в Docker**
-```bash
-docker-compose -f docker-compose.test.yml up --build
-```
 
 ## Swagger UI / OpenAPI документация
 
@@ -104,14 +106,14 @@ docker-compose -f docker-compose.test.yml up --build
 
 **Основная документация**
 
-Swagger UI: http://localhost:8080/swagger-ui.html
+Swagger UI: http://localhost:8000/swagger-ui.html
 
-OpenAPI JSON: http://localhost:8080/v3/api-docs
+OpenAPI JSON: http://localhost:8000/v3/api-docs
 
-OpenAPI YAML: http://localhost:8080/v3/api-docs.yaml
+OpenAPI YAML: http://localhost:8000/v3/api-docs.yaml
 
 ### Как использовать Swagger UI:
-1.**Откройте http://localhost:8080/swagger-ui.html в браузере**
+1.**Откройте http://localhost:8000/swagger-ui.html в браузере**
 
 2.**Авторизуйтесь через endpoints аутентификации**
 

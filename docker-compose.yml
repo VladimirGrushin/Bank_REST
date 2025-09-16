@@ -28,7 +28,7 @@ services:
       - JWT_EXPIRATION_MS=86400000
       - SPRING_PROFILES_ACTIVE=docker
     ports:
-      - "8080:8080"
+      - "8000:8080"
     depends_on:
       - postgres
     networks:
